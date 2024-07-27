@@ -7,6 +7,14 @@
 [![Github all releases](https://img.shields.io/github/downloads/CentraleNantesRobotics/ping360_sonar/total.svg)](https://GitHub.com/CentraleNantesRobotics/ping360_sonar/releases/)
 [![GitHub release](https://img.shields.io/github/release/CentraleNantesRobotics/ping360_sonar.svg)](https://GitHub.com/CentraleNantesRobotics/ping360_sonar/releases/)
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+
+## Fork Note
+This fork of the `ping360_sonar` repository includes significant updates to support UDP communication and compatibility with ROS Noetic on Ubuntu 20.04. The following changes have been made:
+- **UDP Support:** Replaced serial communication with UDP for device interaction. The device IP is set to "169.254.178.221" and port to "12345".
+- **ROS Noetic Compatibility:** Updated the package to ensure compatibility with ROS Noetic and Ubuntu 20.04.
+
+These changes enhance the flexibility and performance of the package, making it suitable for modern ROS environments and network-based communication.
+
 ## Overview
 
 A python ROS package for the [BlueRobotics] [Ping360] Sonar. The package has been tested under [ROS] melodic and Ubuntu 16.04. This code is mostly experimental, expect that it changes often.
