@@ -1,39 +1,37 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # device.py
 # A device API for devices implementing Blue Robotics ping-protocol
 
 import time
+import socket
 from brping import definitions
 from brping import pingmessage
+from brping import Ping360
 from collections import deque
-
-import os
-if os.getenv('emulated_sonar') == 'true':
-    import Emulator as serial
-else:
-    import serial
 
 
 class PingDevice(object):
 
     _input_buffer = deque()
 
-    def __init__(self, device_name, baudrate=115200):
-        if device_name is None:
-            print("Device name is required")
+    def __init__(self, device_ip, device_port):
+        if device_ip is None or device_port is None:
+            print("Device IP and port are required")
             return
 
         try:
-            print("Opening %s at %d bps" % (device_name, baudrate))
+            print(f"Opening UDP connection to {device_ip} at port {device_port}")
 
-            # Serial object for device communication
-            self.iodev = serial.Serial(device_name, baudrate)
-            self.iodev.send_break()
-            self.iodev.write("U".encode("utf-8"))
+            # UDP socket for device communication
+            self.iodev = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.device_address = (device_ip, device_port)
+
+            # Send initialization message if needed
+            self.iodev.sendto("U".encode("utf-8"), self.device_address)
 
         except Exception as e:
-            print("Failed to open the given serial port")
+            print("Failed to open the UDP connection")
             print("\t", e)
             exit(1)
 
@@ -50,8 +48,8 @@ class PingDevice(object):
     # data remaining in the buffer to be parsed, thus requiring subsequent calls to read())
     # @return None: if the buffer is empty and no message has been parsed
     def read(self):
-        bytes = self.iodev.read(self.iodev.in_waiting)
-        self._input_buffer.extendleft(bytes)
+        data, _ = self.iodev.recvfrom(4096)  # Adjust buffer size if needed
+        self._input_buffer.extendleft(data)
 
         while len(self._input_buffer):
             b = self._input_buffer.pop()
@@ -71,7 +69,7 @@ class PingDevice(object):
     #
     # @return Number of bytes written
     def write(self, data):
-        return self.iodev.write(data)
+        return self.iodev.sendto(data, self.device_address)
 
     ##
     # @brief Make sure there is a device on and read some initial data
@@ -226,13 +224,13 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Ping python library example.")
-    parser.add_argument('--device', action="store",
-                        required=True, type=str, help="Ping device port.")
-    parser.add_argument('--baudrate', action="store", type=int,
-                        default=115200, help="Ping device baudrate.")
+    parser.add_argument('--device_ip', action="store",
+                        required=True, type=str, help="Ping device IP address.")
+    parser.add_argument('--device_port', action="store", type=int,
+                        required=True, help="Ping device port.")
     args = parser.parse_args()
 
-    p = PingDevice(args.device, args.baudrate)
+    p = PingDevice(args.device_ip, args.device_port)
 
     print("Initialized: %s" % p.initialize())
 

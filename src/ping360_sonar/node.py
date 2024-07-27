@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from math import cos, pi, sin
 
@@ -12,12 +12,12 @@ from sensor_msgs.msg import LaserScan
 
 from ping360_sonar.cfg import sonarConfig
 from ping360_sonar.msg import SonarEcho
-from sensor import Ping360
+from .sensor import Ping360
 
 # Global Variables
 
-device = None
-baudrate = None
+device_ip = None
+device_port = None
 gain = None
 numberOfSamples = None
 transmitFrequency = None
@@ -73,8 +73,8 @@ def main():
     rospy.init_node('ping360_node')
 
     # Ping 360 Parameters
-    device = rospy.get_param('~device', "/dev/ttyUSB0")
-    baudrate = rospy.get_param('~baudrate', 115200)
+    device_ip = rospy.get_param('~device_ip', "169.254.178.221")
+    device_port = rospy.get_param('~device_port', 12345)
     gain = rospy.get_param('~gain', 0)
     numberOfSamples = rospy.get_param('~numberOfSamples', 200)  # Number of points
     transmitFrequency = rospy.get_param(
@@ -125,7 +125,7 @@ def main():
         return
 
     # Initialize sensor
-    sensor = Ping360(device, baudrate)
+    sensor = Ping360(device_ip, device_port)
     print("Initialized Sensor: %s" % sensor.initialize())
 
     # Dynamic reconfigure server

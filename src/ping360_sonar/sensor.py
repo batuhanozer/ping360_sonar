@@ -4,9 +4,9 @@
 # A device API for the Blue Robotics Ping360 scanning sonar
 
 from brping import definitions
-from device import PingDevice
+from .device import PingDevice
 from brping import pingmessage
-import serial
+import socket
 import time
 
 
@@ -52,21 +52,13 @@ class Ping360(PingDevice):
             return None
         data = ({
             "mode": self._mode,  # Operating mode (1 for Ping360)
-            # Analog gain setting (0 = low, 1 = normal, 2 = high)
-            "gain_setting": self._gain_setting,
+            "gain_setting": self._gain_setting,  # Analog gain setting (0 = low, 1 = normal, 2 = high)
             "angle": self._angle,  # Units: gradian; Head angle
-            # Units: microsecond; Acoustic transmission duration (1~1000 microseconds)
-            "transmit_duration": self._transmit_duration,
-            # Time interval between individual signal intensity samples in 25nsec increments
-            # (80 to 40000 == 2 microseconds to 1000 microseconds)
-            "sample_period": self._sample_period,
-            # Units: kHz; Acoustic operating frequency. Frequency range is 500kHz to 1000kHz,
-            # however it is only practical to use say 650kHz to 850kHz due to the narrow
-            # bandwidth of the acoustic receiver.
-            "transmit_frequency": self._transmit_frequency,
-            # Number of samples per reflected signal
-            "number_of_samples": self._number_of_samples,
-            "data": self._data,        # 8 bit binary data array representing sonar echo strength
+            "transmit_duration": self._transmit_duration,  # Units: microsecond; Acoustic transmission duration (1~1000 microseconds)
+            "sample_period": self._sample_period,  # Time interval between individual signal intensity samples in 25nsec increments (80 to 40000 == 2 microseconds to 1000 microseconds)
+            "transmit_frequency": self._transmit_frequency,  # Units: kHz; Acoustic operating frequency. Frequency range is 500kHz to 1000kHz, however it is only practical to use say 650kHz to 850kHz due to the narrow bandwidth of the acoustic receiver.
+            "number_of_samples": self._number_of_samples,  # Number of samples per reflected signal
+            "data": self._data,  # 8 bit binary data array representing sonar echo strength
         })
         return data
 
@@ -90,13 +82,9 @@ class Ping360(PingDevice):
         self.write(m.msg_data)
         if self.request(definitions.PING360_DEVICE_ID) is None:
             return False
-        # Read back the data and check that changes have been applied
-        if (verify and (self._id != id or self._reserved != reserved)):
+        if verify and (self._id != id or self._reserved != reserved):
             return False
-        return True  # success        m.id = id
-        m.reserved = reserved
-        m.pack_msg_data()
-        self.write(m.msg_data)
+        return True
 
     def control_reset(self, bootloader, reserved):
         m = pingmessage.PingMessage(definitions.PING360_RESET)
@@ -105,18 +93,17 @@ class Ping360(PingDevice):
         m.pack_msg_data()
         self.write(m.msg_data)
 
-    def control_transducer(self, mode, gain_setting, angle, transmit_duration,
-                           sample_period, transmit_frequency, number_of_samples, transmit, reserved):
+    def control_transducer(self, mode, gain_setting, angle, transmit_duration, sample_period, transmit_frequency, number_of_samples, transmit, reserved):
         m = pingmessage.PingMessage(definitions.PING360_TRANSDUCER)
-        m.mode = mode
-        m.gain_setting = gain_setting
-        m.angle = angle
-        m.transmit_duration = transmit_duration
-        m.sample_period = sample_period
-        m.transmit_frequency = transmit_frequency
-        m.number_of_samples = number_of_samples
-        m.transmit = transmit
-        m.reserved = reserved
+        m.mode = int(mode)
+        m.gain_setting = int(gain_setting)
+        m.angle = int(angle)
+        m.transmit_duration = int(transmit_duration)
+        m.sample_period = int(sample_period)
+        m.transmit_frequency = int(transmit_frequency)
+        m.number_of_samples = int(number_of_samples)
+        m.transmit = int(transmit)
+        m.reserved = int(reserved)
         m.pack_msg_data()
         self.write(m.msg_data)
 
